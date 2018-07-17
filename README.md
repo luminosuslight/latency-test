@@ -20,7 +20,7 @@ A video is captured with a microphone in the foreground and the application wind
 | *Initial Sound* | begin |
 | A/D Conversion and Hardware Buffer | ? ms |
 | Software Buffer in USB and Device Driver | ? ms |
-| QAudioInput Buffer (default: ~1760 Samples) | 40 ms |
+| QAudioInput Buffer (default: ~1764 Samples) | 40 ms |
 | Fill whole FFT Window (2048 Samples) | 46 ms |
 | Refresh Timer (60 Hz) | 16 ms |
 | Computation Time | <5 ms |
@@ -28,7 +28,7 @@ A video is captured with a microphone in the foreground and the application wind
 | DMX or GUI Update (~40 Hz) | 25 ms |
 | *Change in brightness of light* | end |
 
--> Theoretic Worst Case Latency: ? + 137 ms
+-> Theoretic Worst Case Latency: **? + 137 ms**
 
 ### Actual Measurement
 
@@ -41,3 +41,25 @@ Time between sound and UI change in EOS software (Sound2Light / Luminosus and Eo
 | Luminosus, Linux, ALSA, cheap USB Soundcard | 160 ms |
 
 (There was no delay between the UI change in Sound2Light and Eos visible -> the network connection seems to be negligible.)
+
+### Conclusion
+
+The actual measurement is close to the theoretic minimum. Therefore the problem seems to be the buffer in QAudioInput and in the sound card driver. This is why the minimal example in this repository was created.
+
+## QAudioInput Measurements
+
+### Effect of `QAudioInput::bufferSize`
+
+Win 10, cheap USB soundcard
+
+| Chosen Buffer Size (Samples) | Actual Chunk Size | Visual Latency |
+| --- | --- | --- |
+| 10 | 10 | 116 ms |
+| 50 | 50 | 100 ms |
+| 100 | 100 | 100 ms |
+| 5000 | 1000 | 83 ms |
+| 20000 | 4000 | 150 ms |
+
+-> the delay between the sound and receiving the data from QAudioInput **doesn't seem to correlate** with the buffer size and the **minimum possible latency of 83ms** seems already quite high
+
+Next step: test with higher quality sound card and ASIO driver
