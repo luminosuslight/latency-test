@@ -52,9 +52,10 @@ The actual measurement is close to the theoretic minimum. Therefore the problem 
 
 ### Effect of `QAudioInput::bufferSize`
 
+- Latency: time between tapping on the mic and seeing a change in the UI
+- Software shows peak value of last received data, no other computation is done (especially no FFT)
 - Win 10: cheap USB soundcard
 - macOS: internal Microphone
-- Latency: time between tapping on the mic and seeing a change in the UI
 - Buffer Sizes in Samples
 - Actual Chunks: amount of samples received per emitted readReady() signal
 
