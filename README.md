@@ -52,15 +52,19 @@ The actual measurement is close to the theoretic minimum. Therefore the problem 
 
 ### Effect of `QAudioInput::bufferSize`
 
-Win 10, cheap USB soundcard
+- Win 10: cheap USB soundcard
+- macOS: internal Microphone
+- Latency: time between tapping on the mic and seeing a change in the UI
+- Buffer Sizes in Samples
+- Actual Chunks: amount of samples received per emitted readReady() signal
 
-| Chosen Buffer Size (Samples) | Actual Chunk Size | Visual Latency |
-| --- | --- | --- |
-| 10 | 10 | 116 ms |
-| 50 | 50 | 100 ms |
-| 100 | 100 | 100 ms |
-| 5000 | 1000 | 83 ms |
-| 20000 | 4000 | 150 ms |
+| Chosen Buffer Size | Actual Chunks (Win 10) | Latency (Win 10) | Actual Chunks (macOS) | Latency (macOS) |
+| --- | --- | --- | --- | --- |
+| 10 | 10 | 116 ms | 14 | 100 ms |
+| 50 | 50 | 100 ms | 50 | 100 ms |
+| 100 | 100 | 100 ms | 100 | 100 ms |
+| 5000 | 1000 | 83 ms | 4096 | 176 ms |
+| 20000 | 4000 | 150 ms | 4096 | 144 ms |
 
 -> the delay between the sound and receiving the data from QAudioInput **doesn't seem to correlate** with the buffer size and the **minimum possible latency of 83ms** seems already quite high
 
