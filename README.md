@@ -9,6 +9,8 @@ To be able to better optimize the latency of the the involved QAudioInput, a min
 
 A video is captured with a microphone in the foreground and the application window in the background. Then the frames are counted between tapping on the mic and seeing a change in the UI. The 	measuring tolerance is 16ms with this technique (when capturing with 60 fps).
 
+![Test Setup](screenshot/latency-test-setup.png)
+
 ## Initial Insights
 
 ### Theoretic Worst Case Latency
