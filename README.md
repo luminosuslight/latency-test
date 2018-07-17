@@ -9,7 +9,7 @@ To be able to better optimize the latency of the the involved QAudioInput, a min
 
 A video is captured with a microphone in the foreground and the application window in the background. Then the frames are counted between tapping on the mic and seeing a change in the UI. The 	measuring tolerance is 16ms with this technique (when capturing with 60 fps).
 
-## Insights
+## Initial Insights
 
 ### Theoretic Worst Case Latency
 
@@ -32,7 +32,7 @@ A video is captured with a microphone in the foreground and the application wind
 
 ### Actual Measurement
 
-Time between sound and UI change in EOS software (Sound2Light / Luminosus and Eos running on different computers, connected using ethernet)
+Time between sound and UI change in Eos software (Sound2Light 0.0.2.1.0.9 (Windows 10) and Eos 2.7.1 (macOS) running on different computers, connected using ethernet)
 
 | Setup | Latency |
 | --- | --- |
