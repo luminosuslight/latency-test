@@ -2,7 +2,8 @@
 
 ### Goal
 
-Reducing the time between a sound and a DMX value being sent while using the [Sound2Light Tool](https://github.com/ETCLabs/Sound2Light) together with an Eos Console.
+Reducing the time between a sound and a DMX value being sent while using the [Sound2Light Tool](https://github.com/ETCLabs/Sound2Light) together with an Eos Console. The goal is to get from [216 ms](sound_examples/delay_216ms.wav) to something like [40 ms](sound_examples/delay_40ms.wav) (click the numbers to hear the latency).
+
 To be able to better optimize the latency of the the involved QAudioInput, a minimal working example was created that allows to measure the time between a sound and receiving a value from QAudioInput.
 
 ### Measurement Procedure
@@ -30,7 +31,7 @@ A video is captured with a microphone in the foreground and the application wind
 | DMX or GUI Update (~40 Hz) | 25 ms |
 | *Change in brightness of light* | end |
 
--> Theoretic Worst Case Latency: **? + 137 ms**
+-> Theoretic Worst Case Latency: **? + 137 ms** [Hear how 150ms latency sounds](sound_examples/delay_150ms.wav)
 
 ### Actual Measurement
 
@@ -38,9 +39,9 @@ Time between sound and UI change in Eos software (Sound2Light 0.0.2.1.0.9 (Windo
 
 | Setup | Latency |
 | --- | --- |
-| S2L, Win 10, cheap USB Soundcard | 216 ms |
-| Luminosus, Win 10, cheap USB Soundcard | 160 ms |
-| Luminosus, Linux, ALSA, cheap USB Soundcard | 160 ms |
+| S2L, Win 10, cheap USB Soundcard |  [216 ms](sound_examples/delay_216ms.wav) |
+| Luminosus, Win 10, cheap USB Soundcard | [160 ms](sound_examples/delay_150ms.wav) |
+| Luminosus, Linux, ALSA, cheap USB Soundcard | [160 ms](sound_examples/delay_150ms.wav) |
 
 (There was no delay between the UI change in Sound2Light and Eos visible -> the network connection seems to be negligible.)
 
