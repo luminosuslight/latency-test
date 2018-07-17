@@ -8,8 +8,8 @@
 
 AudioInput::AudioInput(QObject *parent)
     : QObject(parent)
-    , m_bufferSize(20000)
-    , m_audioInput(nullptr)
+    , m_bufferSize(64)
+    , m_rtAudio(new RtAudio())
     , m_maxLevelOfLastChunk(0)
     , m_gloablMaxLevel(0)
     , m_history(qMin(6, 40000 / m_bufferSize), 0)
@@ -19,49 +19,42 @@ AudioInput::AudioInput(QObject *parent)
 
 }
 
-void AudioInput::startCapture(QString inputName) {
-    // Close and delete previous input device:
-    if (m_audioInput) {
-        m_audioInput->stop();
+int recordCallback(void* /*out*/, void* inputBuffer, unsigned int nBufferFrames,
+           double /*streamTime*/, RtAudioStreamStatus status, void* userData) {
+    if (status) {
+        qWarning() << "Stream overflow detected!";
     }
-    delete m_audioInput;
-    m_audioInput = nullptr;
+    QByteArray buffer(reinterpret_cast<const char*>(inputBuffer), nBufferFrames*2*2);
+    AudioInput* audioInput = reinterpret_cast<AudioInput*>(userData);
+    audioInput->updateFromRawData(buffer);
+    return 0;
+}
 
-    // Get device info of new input:
-    m_deviceInfo = QAudioDeviceInfo::defaultInputDevice();
-    if (!inputName.isEmpty()) {
-        QList<QAudioDeviceInfo> devices = QAudioDeviceInfo::availableDevices(QAudio::AudioInput);
-        for (QAudioDeviceInfo device: devices) {
-            if (device.deviceName() == inputName) {
-                m_deviceInfo = device;
-            }
-        }
+void AudioInput::startCapture(QString /*inputName*/) {
+    if (m_rtAudio->getDeviceCount() < 1) {
+        qDebug() << "No audio devices found!";
+        return;
     }
-
-    // check if desired format is supported:
-    m_format.setSampleRate(44100);
-    m_format.setChannelCount(2);
-    m_format.setSampleSize(16);
-    m_format.setCodec("audio/pcm");
-    m_format.setByteOrder(QAudioFormat::LittleEndian);
-    m_format.setSampleType(QAudioFormat::SignedInt);
-
-    if (!m_deviceInfo.isFormatSupported(m_format)) {
-        qWarning() << "Default audio format not supported, trying to use the nearest.";
-        m_format = m_deviceInfo.nearestFormat(m_format);
+    for (unsigned int i = 0; i < m_rtAudio->getDeviceCount(); ++i) {
+        RtAudio::DeviceInfo info = m_rtAudio->getDeviceInfo(i);
+        qDebug() << QString::fromStdString(info.name);
     }
-
-    // create new input:
-    m_audioInput = new QAudioInput(m_deviceInfo, m_format, this);
-    m_audioInput->setVolume(1.0);
-    m_audioInput->setBufferSize(m_bufferSize * m_format.bytesPerFrame());
-    QIODevice* ioDevice = m_audioInput->start();
-    connect(ioDevice, &QIODevice::readyRead, [this, ioDevice](){
-        qint64 len = this->m_audioInput->bytesReady();
-        if (len <= 0) return;
-        QByteArray buffer = ioDevice->read(len);
-        updateFromRawData(buffer);
-    });
+    RtAudio::StreamParameters parameters;
+    parameters.deviceId = m_rtAudio->getDefaultInputDevice();
+    parameters.nChannels = 2;
+    parameters.firstChannel = 0;
+    unsigned int sampleRate = 44100;
+    unsigned int bufferFrames = m_bufferSize;
+    RtAudio::StreamOptions options;
+    options.flags = RTAUDIO_MINIMIZE_LATENCY;
+    options.numberOfBuffers = 2;
+    try {
+        m_rtAudio->openStream(NULL, &parameters, RTAUDIO_SINT16,
+                       sampleRate, &bufferFrames, &recordCallback, this, &options);
+        m_rtAudio->startStream();
+    } catch (RtAudioError& e) {
+        e.printMessage();
+    }
 }
 
 qreal AudioInput::lastPeakValue() const {
@@ -69,8 +62,9 @@ qreal AudioInput::lastPeakValue() const {
 }
 
 void AudioInput::updateFromRawData(QByteArray audioData) {
-    const int channelBytes = m_format.sampleSize() / 8;
-    const int sampleBytes = m_format.channelCount() * channelBytes;
+    const int channelCount = 2;
+    const int channelBytes = 2;
+    const int sampleBytes = channelCount * channelBytes;
     const int numSamples = audioData.size() / sampleBytes;
     if (numSamples <= 0) return;
     m_lastChunkSize = numSamples;
@@ -80,36 +74,10 @@ void AudioInput::updateFromRawData(QByteArray audioData) {
     const unsigned char* ptr = reinterpret_cast<const unsigned char *>(audioData.data());
 
     for (int i = 0; i < numSamples; ++i) {
-        for (int j = 0; j < m_format.channelCount(); ++j) {
+        for (int j = 0; j < channelCount; ++j) {
             quint32 value = 0;
 
-            if (m_format.sampleSize() == 8 && m_format.sampleType() == QAudioFormat::UnSignedInt) {
-                value = *reinterpret_cast<const quint8*>(ptr);
-            } else if (m_format.sampleSize() == 8 && m_format.sampleType() == QAudioFormat::SignedInt) {
-                value = qAbs(*reinterpret_cast<const qint8*>(ptr));
-            } else if (m_format.sampleSize() == 16 && m_format.sampleType() == QAudioFormat::UnSignedInt) {
-                if (m_format.byteOrder() == QAudioFormat::LittleEndian)
-                    value = qFromLittleEndian<quint16>(ptr);
-                else
-                    value = qFromBigEndian<quint16>(ptr);
-            } else if (m_format.sampleSize() == 16 && m_format.sampleType() == QAudioFormat::SignedInt) {
-                if (m_format.byteOrder() == QAudioFormat::LittleEndian)
-                    value = qAbs(qFromLittleEndian<qint16>(ptr));
-                else
-                    value = qAbs(qFromBigEndian<qint16>(ptr));
-            } else if (m_format.sampleSize() == 32 && m_format.sampleType() == QAudioFormat::UnSignedInt) {
-                if (m_format.byteOrder() == QAudioFormat::LittleEndian)
-                    value = qFromLittleEndian<quint32>(ptr);
-                else
-                    value = qFromBigEndian<quint32>(ptr);
-            } else if (m_format.sampleSize() == 32 && m_format.sampleType() == QAudioFormat::SignedInt) {
-                if (m_format.byteOrder() == QAudioFormat::LittleEndian)
-                    value = qAbs(qFromLittleEndian<qint32>(ptr));
-                else
-                    value = qAbs(qFromBigEndian<qint32>(ptr));
-            } else if (m_format.sampleSize() == 32 && m_format.sampleType() == QAudioFormat::Float) {
-                value = qAbs(*reinterpret_cast<const float*>(ptr) * 0x7fffffff); // assumes 0-1.0
-            }
+            value = qAbs(qFromLittleEndian<qint16>(ptr));
 
             maxValue = qMax(value, maxValue);
             ptr += channelBytes;

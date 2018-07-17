@@ -30,3 +30,9 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     AudioInput.h
+
+LIBS += -L$${PWD} -lrtaudio
+macx {
+    INCLUDEPATH += /usr/local/include/
+    LIBS += -L/usr/local/lib -lrtaudio
+}

@@ -3,7 +3,8 @@
 
 #include <QObject>
 #include <QVector>
-#include <QAudioInput>
+
+#include "RtAudio.h"
 
 
 class AudioInput : public QObject {
@@ -12,6 +13,9 @@ class AudioInput : public QObject {
 
     Q_PROPERTY(qreal lastPeakValue READ lastPeakValue NOTIFY lastPeakValueChanged)
     Q_PROPERTY(int lastChunkSize MEMBER m_lastChunkSize NOTIFY lastChunkSizeChanged)
+
+    friend int recordCallback(void* /*out*/, void* inputBuffer, unsigned int nBufferFrames,
+                              double /*streamTime*/, RtAudioStreamStatus status, void* userData);
 
 public:
     explicit AudioInput(QObject* parent = 0);
@@ -25,16 +29,14 @@ public slots:
 
     int bufferSize() const { return m_bufferSize; }
     qreal lastPeakValue() const;
-    QString deviceName() const { return m_deviceInfo.deviceName(); }
+    QString deviceName() const { return ""; }
 
 private:
     void updateFromRawData(QByteArray audioData);
 
 protected:
     int m_bufferSize;
-    QAudioDeviceInfo m_deviceInfo;
-    QAudioInput* m_audioInput;
-    QAudioFormat m_format;
+    RtAudio* m_rtAudio;
 
     qreal m_maxLevelOfLastChunk;
     quint32 m_gloablMaxLevel;
