@@ -1,4 +1,4 @@
-## Investigating the latency of QAudioInput
+## Reducing the Latency of the [Sound2Light Tool](https://github.com/ETCLabs/Sound2Light)
 
 ### Goal
 
@@ -8,7 +8,9 @@ To be able to better optimize the latency of the the involved QAudioInput, a min
 
 ### Measurement Procedure
 
-A video is captured with a microphone in the foreground and the application window in the background. Then the frames are counted between tapping on the mic and seeing a change in the UI. The 	measuring tolerance is 16ms with this technique (when capturing with 60 fps).
+A video is captured with a microphone in the foreground and the application window in the background. Then the frames are counted between tapping on the mic and seeing a change in the UI. The measuring tolerance is 16ms with this technique (when capturing with 60 fps).
+
+**Input and Display Lag:** The time between a mouse click or a keyboard press and a UI change in this setup is ~128 ms. The time between a mouse click and a light turning on (connected via ArtNet / Ethernet and DMX) is ~80 ms. This means that the display lag seems to be ~48 ms.
 
 ![Test Setup](screenshot/latency-test-setup.png)
 
