@@ -4,15 +4,17 @@
 
 Reducing the time between a sound and a DMX value being sent while using the [Sound2Light Tool](https://github.com/ETCLabs/Sound2Light) together with an Eos Console. The goal is to get from 168 ms to something like 40 ms.
 
-To be able to better optimize the latency of the the involved QAudioInput, a minimal working example was created that allows to measure the time between a sound and receiving a value from QAudioInput.
+To be able to better optimize the latency of the the involved QAudioInput, a minimal working example was created that allows to measure the time between a sound and receiving a value from QAudioInput. The code is in the `src_*` folders.
 
 ### Measurement Procedure
 
 A video is captured with a microphone in the foreground and the application window in the background. Then the frames are counted between tapping on the mic and seeing a change in the UI. The measuring tolerance is 16ms with this technique (when capturing with 60 fps).
 
+![Test Setup](images/latency-test-setup.png)
+
 **Input and Display Lag:** The time between a mouse click or a key press and a UI change in this setup is ~128 ms. The time between a mouse click and a light turning on (connected via ArtNet / Ethernet and DMX) is ~80 ms. The difference between those two times (48 ms, mostly the display lag) is removed from all other measured values.
 
-![Test Setup](screenshot/latency-test-setup.png)
+![Input Latencies](images/input_latencies_luminosus.png)
 
 ## Initial Insights
 
